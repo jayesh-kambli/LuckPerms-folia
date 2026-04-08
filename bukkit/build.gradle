@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+// Paper API 1.20.4 requires Java 17+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
 repositories {
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
 }

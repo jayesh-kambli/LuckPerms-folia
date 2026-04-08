@@ -34,10 +34,12 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
+import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * The {@link Server#getConsoleSender()} method returns null during onEnable
@@ -66,6 +68,11 @@ public class NullSafeConsoleCommandSender implements ConsoleCommandSender {
     }
 
     @Override
+    public @NonNull Component name() {
+        return Component.text("CONSOLE");
+    }
+
+    @Override
     public void sendMessage(@NonNull String message) {
         Optional<ConsoleCommandSender> console = get();
         if (console.isPresent()) {
@@ -77,6 +84,18 @@ public class NullSafeConsoleCommandSender implements ConsoleCommandSender {
 
     @Override
     public void sendMessage(String[] messages) {
+        for (String msg : messages) {
+            sendMessage(msg);
+        }
+    }
+
+    @Override
+    public void sendMessage(@NonNull UUID sender, @NonNull String message) {
+        sendMessage(message);
+    }
+
+    @Override
+    public void sendMessage(@NonNull UUID sender, @NonNull String... messages) {
         for (String msg : messages) {
             sendMessage(msg);
         }
@@ -115,6 +134,7 @@ public class NullSafeConsoleCommandSender implements ConsoleCommandSender {
     @Override public void abandonConversation(@NonNull Conversation conversation) { throw new UnsupportedOperationException(); }
     @Override public void abandonConversation(@NonNull Conversation conversation, @NonNull ConversationAbandonedEvent conversationAbandonedEvent) { throw new UnsupportedOperationException(); }
     @Override public void sendRawMessage(@NonNull String s) { throw new UnsupportedOperationException(); }
+    @Override public void sendRawMessage(@NonNull UUID sender, @NonNull String message) { throw new UnsupportedOperationException(); }
     @Override public @NonNull PermissionAttachment addAttachment(@NonNull Plugin plugin, @NonNull String s, boolean b) { throw new UnsupportedOperationException(); }
     @Override public @NonNull PermissionAttachment addAttachment(@NonNull Plugin plugin) { throw new UnsupportedOperationException(); }
     @Override public PermissionAttachment addAttachment(@NonNull Plugin plugin, @NonNull String s, boolean b, int i) { throw new UnsupportedOperationException(); }
