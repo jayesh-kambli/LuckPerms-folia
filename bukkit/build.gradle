@@ -2,9 +2,9 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-// Paper API 1.20.4 requires Java 17+
+// Paper API 1.21.1 requires Java 21+
 tasks.withType(JavaCompile).configureEach {
-    options.release = 17
+    options.release = 21
 }
 
 repositories {
@@ -15,7 +15,7 @@ dependencies {
     implementation project(':common')
     compileOnly project(':common:loader-utils')
 
-    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
     compileOnly('net.kyori:adventure-platform-bukkit:4.4.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
@@ -35,7 +35,14 @@ shadowJar {
         include(dependency('me.lucko.luckperms:.*'))
     }
 
-    relocate 'net.kyori.adventure', 'me.lucko.luckperms.lib.adventure'
+    // NullSafeConsoleCommandSender implements Paper's CommandSender interface whose
+    // name() method returns net.kyori.adventure.text.Component (server-provided).
+    // Relocating that reference would produce me.lucko.luckperms.lib.adventure.text.Component
+    // which: (a) the server can't satisfy at class-load time, and (b) is the wrong type
+    // for the interface contract. Exclude this file from the adventure relocation.
+    relocate('net.kyori.adventure', 'me.lucko.luckperms.lib.adventure') {
+        exclude 'me/lucko/luckperms/bukkit/util/NullSafeConsoleCommandSender.class'
+    }
     relocate 'net.kyori.event', 'me.lucko.luckperms.lib.eventbus'
     relocate 'com.github.benmanes.caffeine', 'me.lucko.luckperms.lib.caffeine'
     relocate 'okio', 'me.lucko.luckperms.lib.okio'

@@ -34,7 +34,6 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
-import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Optional;
@@ -67,9 +66,16 @@ public class NullSafeConsoleCommandSender implements ConsoleCommandSender {
         return "CONSOLE";
     }
 
+    // NOTE: this class is EXCLUDED from the net.kyori.adventure relocation in shadowJar.
+    // The return type must be the server's net.kyori.adventure.text.Component,
+    // not the relocated me.lucko.luckperms.lib.adventure.text.Component.
     @Override
-    public @NonNull Component name() {
-        return Component.text("CONSOLE");
+    public net.kyori.adventure.text.@NonNull Component name() {
+        Optional<ConsoleCommandSender> console = get();
+        if (console.isPresent()) {
+            return console.get().name();
+        }
+        return net.kyori.adventure.text.Component.text(getName());
     }
 
     @Override
