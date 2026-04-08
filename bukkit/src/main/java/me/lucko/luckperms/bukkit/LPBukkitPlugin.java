@@ -292,7 +292,8 @@ public class LPBukkitPlugin extends AbstractLuckPermsPlugin {
                 try {
                     User user = this.connectionListener.loadUser(player.getUniqueId(), player.getName());
                     if (user != null) {
-                        this.bootstrap.getScheduler().executeSync(() -> {
+                        // Inject permissible on the player's own region thread (Folia-safe)
+                        player.getScheduler().run(this.bootstrap.getLoader(), task -> {
                             try {
                                 LuckPermsPermissible lpPermissible = new LuckPermsPermissible(player, user, this);
                                 PermissibleInjector.inject(player, lpPermissible, getLogger());
@@ -300,7 +301,7 @@ public class LPBukkitPlugin extends AbstractLuckPermsPlugin {
                                 getLogger().severe("Exception thrown when setting up permissions for " +
                                         player.getUniqueId() + " - " + player.getName(), t);
                             }
-                        });
+                        }, null);
                     }
                 } catch (Exception e) {
                     getLogger().severe("Exception occurred whilst loading data for " +

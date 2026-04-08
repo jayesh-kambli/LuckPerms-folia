@@ -57,6 +57,7 @@ import net.milkbowl.vault.permission.Permission;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -110,8 +111,8 @@ public class LuckPermsVaultPermission extends AbstractVaultPermission {
             return uuid;
         }
 
-        // are we on the main thread?
-        if (!this.plugin.getBootstrap().isServerStarting() && this.plugin.getBootstrap().getServer().isPrimaryThread() && !this.plugin.getConfiguration().get(ConfigKeys.VAULT_UNSAFE_LOOKUPS)) {
+        // are we on a tick thread? (Folia-aware: checks any region tick thread, not just primary)
+        if (!this.plugin.getBootstrap().isServerStarting() && isTickThread() && !this.plugin.getConfiguration().get(ConfigKeys.VAULT_UNSAFE_LOOKUPS)) {
             throw new ServerThreadLookupException(player);
         }
 
@@ -148,8 +149,8 @@ public class LuckPermsVaultPermission extends AbstractVaultPermission {
             return npcGroup;
         }
 
-        // are we on the main thread?
-        if (!this.plugin.getBootstrap().isServerStarting() && this.plugin.getBootstrap().getServer().isPrimaryThread() && !this.plugin.getConfiguration().get(ConfigKeys.VAULT_UNSAFE_LOOKUPS)) {
+        // are we on a tick thread? (Folia-aware: checks any region tick thread, not just primary)
+        if (!this.plugin.getBootstrap().isServerStarting() && isTickThread() && !this.plugin.getConfiguration().get(ConfigKeys.VAULT_UNSAFE_LOOKUPS)) {
             throw new ServerThreadLookupException(uuid);
         }
 
@@ -486,6 +487,33 @@ public class LuckPermsVaultPermission extends AbstractVaultPermission {
 
     private boolean useVaultServer() {
         return this.plugin.getConfiguration().get(ConfigKeys.USE_VAULT_SERVER);
+    }
+
+    /**
+     * Folia-aware tick-thread check.
+     *
+     * On standard Paper/Spigot there is a single primary thread; Bukkit.isPrimaryThread() works.
+     * On Folia every region has its own tick thread; isPrimaryThread() always returns false.
+     * We use reflection to call io.papermc.paper.threadedregions.RegionizedServer#isTickThread()
+     * when available, which returns true on any region or global tick thread.
+     */
+    private static boolean isTickThread() {
+        try {
+            Class<?> regionizedServer = Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            // isTickThread() covers all region threads; fall back to isGlobalTickThread() if missing
+            try {
+                Method isTickThread = regionizedServer.getMethod("isTickThread");
+                return (boolean) isTickThread.invoke(null);
+            } catch (NoSuchMethodException e) {
+                Method isGlobal = regionizedServer.getMethod("isGlobalTickThread");
+                return (boolean) isGlobal.invoke(null);
+            }
+        } catch (ClassNotFoundException e) {
+            // Not Folia — standard single-threaded server
+            return org.bukkit.Bukkit.getServer().isPrimaryThread();
+        } catch (Exception e) {
+            return org.bukkit.Bukkit.getServer().isPrimaryThread();
+        }
     }
 
 }

@@ -93,9 +93,11 @@ public class BukkitCommandListUpdater implements LuckPermsEventListener {
         if (this.plugin.getBootstrap().isServerStopping()) {
             return;
         }
-        
-        this.plugin.getBootstrap().getScheduler().sync()
-                .execute(() -> this.plugin.getBootstrap().getPlayer(uniqueId).ifPresent(Player::updateCommands));
+
+        // Schedule updateCommands() on the player's own region thread (Folia-safe)
+        this.plugin.getBootstrap().getPlayer(uniqueId).ifPresent(player ->
+                player.getScheduler().run(this.plugin.getLoader(), task -> player.updateCommands(), null)
+        );
     }
 
     private final class SendBuffer extends BufferedRequest<Void> {
