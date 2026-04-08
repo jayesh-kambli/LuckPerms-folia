@@ -76,8 +76,14 @@ public class LPBukkitBootstrap implements LuckPermsBootstrap, LoaderBootstrap, B
     /**
      * A null-safe console instance which delegates to the server logger
      * if {@link Server#getConsoleSender()} returns null.
+     *
+     * Intentionally NOT initialised in the constructor. NullSafeConsoleCommandSender
+     * references net.kyori.adventure.text.Component (shadow-relocated), which is only
+     * available after the JarInJar dependency download in onLoad(). On modern
+     * Folia / Paper 1.20+ getConsoleSender() is always non-null so the fallback
+     * wrapper is never needed at all.
      */
-    private final ConsoleCommandSender console;
+    private volatile ConsoleCommandSender console;
 
     /**
      * The plugin instance
@@ -104,7 +110,7 @@ public class LPBukkitBootstrap implements LuckPermsBootstrap, LoaderBootstrap, B
         this.logger = new JavaPluginLogger(loader.getLogger());
         this.schedulerAdapter = new BukkitSchedulerAdapter(this);
         this.classPathAppender = new JarInJarClassPathAppender(getClass().getClassLoader());
-        this.console = new NullSafeConsoleCommandSender(getServer());
+        // console is initialised lazily in getConsole() — see field comment above
         this.plugin = new LPBukkitPlugin(this);
     }
 
@@ -135,6 +141,20 @@ public class LPBukkitBootstrap implements LuckPermsBootstrap, LoaderBootstrap, B
     }
 
     public ConsoleCommandSender getConsole() {
+        if (this.console == null) {
+            synchronized (this) {
+                if (this.console == null) {
+                    // On Folia / Paper 1.20+ getConsoleSender() is always non-null.
+                    // Using the server's real sender avoids ever loading
+                    // NullSafeConsoleCommandSender (which references relocated Adventure)
+                    // before the JarInJar dependency download has completed.
+                    ConsoleCommandSender serverConsole = getServer().getConsoleSender();
+                    this.console = (serverConsole != null)
+                            ? serverConsole
+                            : new NullSafeConsoleCommandSender(getServer());
+                }
+            }
+        }
         return this.console;
     }
 
