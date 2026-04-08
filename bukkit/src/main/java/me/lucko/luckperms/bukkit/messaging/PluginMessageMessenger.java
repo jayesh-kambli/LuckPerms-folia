@@ -32,7 +32,6 @@ import net.luckperms.api.messenger.IncomingMessageConsumer;
 import net.luckperms.api.messenger.Messenger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Collection;
@@ -61,19 +60,19 @@ public class PluginMessageMessenger extends AbstractPluginMessageMessenger imple
 
     @Override
     protected void sendOutgoingMessage(byte[] buf) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
+        this.plugin.getBootstrap().getServer().getGlobalRegionScheduler().runAtFixedRate(
+            this.plugin.getLoader(),
+            task -> {
                 Collection<? extends Player> players = PluginMessageMessenger.this.plugin.getBootstrap().getServer().getOnlinePlayers();
                 Player p = Iterables.getFirst(players, null);
                 if (p == null) {
                     return;
                 }
-
                 p.sendPluginMessage(PluginMessageMessenger.this.plugin.getLoader(), CHANNEL, buf);
-                cancel();
-            }
-        }.runTaskTimer(this.plugin.getLoader(), 1L, 100L);
+                task.cancel();
+            },
+            1L, 100L
+        );
     }
 
     @Override

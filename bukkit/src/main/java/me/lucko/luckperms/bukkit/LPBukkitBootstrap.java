@@ -175,7 +175,7 @@ public class LPBukkitBootstrap implements LuckPermsBootstrap, LoaderBootstrap, B
             this.plugin.enable();
 
             // schedule a task to update the 'serverStarting' flag
-            getServer().getScheduler().runTask(this.loader, () -> this.serverStarting = false);
+            getServer().getGlobalRegionScheduler().run(this.loader, task -> this.serverStarting = false);
         } finally {
             this.enableLatch.countDown();
         }

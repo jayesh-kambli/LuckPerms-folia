@@ -1,5 +1,10 @@
 ![](https://raw.githubusercontent.com/LuckPerms/branding/master/banner/banner.png "Banner")
-# LuckPerms
+# LuckPerms-folia
+
+> **Folia fork** — All Bukkit scheduler calls replaced with Folia's `GlobalRegionScheduler`, `AsyncScheduler`, and `EntityScheduler`. Add `folia-supported: true` is set in `plugin.yml`. Requires Paper API 1.20.4+.
+
+---
+
 [![Build Status](https://ci.lucko.me/job/LuckPerms/badge/icon)](https://ci.lucko.me/job/LuckPerms/)
 [![javadoc](https://javadoc.io/badge2/net.luckperms/api/javadoc.svg)](https://javadoc.io/doc/net.luckperms/api)
 [![Maven Central](https://img.shields.io/maven-metadata/v/https/repo1.maven.org/maven2/net/luckperms/api/maven-metadata.xml.svg?label=maven%20central&colorB=brightgreen)](https://search.maven.org/artifact/net.luckperms/api)
